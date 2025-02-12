@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock Data and News</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        h1, h2 {
+            color: #333;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f4f4f4;
+        }
+        .news-item {
+            margin-bottom: 15px;
+        }
+        .sentiment {
+            margin-left: 20px;
+            font-size: 0.9em;
+            color: #555;
+        }
+    </style>
+</head>
+<body>
+    <h1>Historical Stock Data</h1>
+    {{ stock_data | safe }}
+
+    <h1>Latest Financial News Headlines</h1>
+    {% for headline in headlines %}
+        <div class="news-item">
+            <strong>{{ loop.index }}. {{ headline }}</strong>
+        </div>
+    {% endfor %}
+
+    <h1>Sentiment Analysis of News Headlines</h1>
+    {% for result in sentiment_results %}
+        <div class="news-item">
+            <strong>{{ loop.index }}. Headline: {{ result.headline }}</strong>
+            <div class="sentiment">
+                Sentiment Polarity: {{ result.polarity | round(2) }} (Range: -1 to 1)<br>
+                Sentiment Subjectivity: {{ result.subjectivity | round(2) }} (Range: 0 to 1)
+            </div>
+        </div>
+    {% endfor %}
+</body>
+</html>

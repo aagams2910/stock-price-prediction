@@ -8,21 +8,29 @@ app = Flask(__name__)
 
 def fetch_stock_data():
     ticker = "RELIANCE.NS"
-    print(f"Fetching historical stock prices for {ticker}...")
-    stock_data = yf.download(ticker, start="2020-01-01", end="2023-10-01")
-    return stock_data.head().to_html()
+    try:
+        print(f"Fetching historical stock prices for {ticker}...")
+        stock_data = yf.download(ticker, start="2020-01-01", end="2023-10-01")
+        if stock_data.empty:
+            return f"No data found for {ticker} in the specified date range."
+        return stock_data.head().to_html()
+    except Exception as e:
+        return f"Error fetching stock data: {str(e)}"
 
 def fetch_news_headlines():
     url = "https://www.businesstoday.in/latest/economy"
-    print(f"\nScraping financial news headlines from {url}...")
-    response = requests.get(url)
-    soup = BeautifulSoup(response.text, "html.parser")
+    try:
+        print(f"\nScraping financial news headlines from {url}...")
+        response = requests.get(url)
+        soup = BeautifulSoup(response.text, "html.parser")
 
-    headlines = []
-    for headline in soup.select("h2 a"):
-        headlines.append(headline.text.strip())
+        headlines = []
+        for headline in soup.select("h2 a"):
+            headlines.append(headline.text.strip())
 
-    return headlines[:5]  # Return top 5 headlines
+        return headlines[:5]  # Return top 5 headlines
+    except Exception as e:
+        return [f"Error fetching news headlines: {str(e)}"]
 
 def analyze_sentiment(headlines):
     sentiment_results = []
