@@ -3,60 +3,87 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Stock Data and News</title>
+    <title>Stock Analysis & Prediction</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-        }
-        h1, h2 {
-            color: #333;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 20px;
-        }
-        table, th, td {
-            border: 1px solid #ddd;
-        }
-        th, td {
-            padding: 8px;
-            text-align: left;
-        }
-        th {
-            background-color: #f4f4f4;
-        }
-        .news-item {
-            margin-bottom: 15px;
-        }
-        .sentiment {
-            margin-left: 20px;
-            font-size: 0.9em;
-            color: #555;
-        }
+        .stock-card { margin: 20px 0; padding: 20px; border: 1px solid #ddd; border-radius: 8px; }
+        .prediction-table { background-color: #f8f9fa; }
+        .positive { color: green; }
+        .negative { color: red; }
     </style>
 </head>
 <body>
-    <h1>Historical Stock Data</h1>
-    {{ stock_data | safe }}
-
-    <h1>Latest Financial News Headlines</h1>
-    {% for headline in headlines %}
-        <div class="news-item">
-            <strong>{{ loop.index }}. {{ headline }}</strong>
-        </div>
-    {% endfor %}
-
-    <h1>Sentiment Analysis of News Headlines</h1>
-    {% for result in sentiment_results %}
-        <div class="news-item">
-            <strong>{{ loop.index }}. Headline: {{ result.headline }}</strong>
-            <div class="sentiment">
-                Sentiment Polarity: {{ result.polarity | round(2) }} (Range: -1 to 1)<br>
-                Sentiment Subjectivity: {{ result.subjectivity | round(2) }} (Range: 0 to 1)
+    <div class="container">
+        <h1 class="my-4">Nifty 50 Stock Predictions</h1>
+        
+        {% for ticker, data in nifty_stock_data.items() %}
+            <div class="stock-card">
+                <h2>{{ ticker }}</h2>
+                
+                {% if 'error' in data %}
+                    <div class="alert alert-danger">{{ data.error }}</div>
+                {% else %}
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h4>Historical Prices (Last 5 Days)</h4>
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Close</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for row in data.historical %}
+                                        <tr>
+                                            <td>{{ row.Date | default('N/A') }}</td>
+                                            <td>{{ row.Close | default('N/A') | round(2) }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <h4>5-Day Price Prediction</h4>
+                            <table class="table table-striped prediction-table">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Predicted Close</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for pred in data.prediction %}
+                                        <tr>
+                                            <td>{{ pred.Date | default('N/A') }}</td>
+                                            <td class="{% if pred['Predicted Close'] > data.historical[-1].Close %}positive{% else %}negative{% endif %}">
+                                                {{ pred['Predicted Close'] | default('N/A') }}
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                {% endif %}
+                
+                <div class="mt-4">
+                    <h4>Related News Sentiment</h4>
+                    {% for sentiment in nifty_sentiment.get(ticker, []) %}
+                        <div class="news-item mb-3">
+                            <div class="fw-bold">{{ sentiment.headline | default('No headline available') }}</div>
+                            <div class="sentiment">
+                                Polarity: {{ sentiment.polarity | default(0) | round(2) }} 
+                                ({% if sentiment.polarity > 0 %}Positive{% elif sentiment.polarity < 0 %}Negative{% else %}Neutral{% endif %})
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
             </div>
-        </div>
-    {% endfor %}
+        {% endfor %}
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
