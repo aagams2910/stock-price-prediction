@@ -44,6 +44,6 @@ class PortfolioOptimizer:
                 'ticker': ticker,
                 'percentage': weights[i] * 100,
                 'expected_return': self.expected_returns.iloc[i],
-                'volatility': np.sqrt(self.cov_matrix.iloc[i,i])
+                'volatility': np.sqrt(self.cov_matrix.iloc[i, i])
             })
         return sorted(allocations, key=lambda x: x['percentage'], reverse=True)

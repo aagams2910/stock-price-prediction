@@ -36,9 +36,11 @@ with st.sidebar:
 # --- Data Fetching ---
 @st.cache_data(show_spinner=False, ttl=3600)
 def get_enhanced_data(ticker, days=730):
-    """Fetch data using yfinance"""
+    """Fetch data using yfinance using explicit start and end dates."""
     try:
-        data = yf.download(ticker, period=f"{days}d")
+        end_date = datetime.today()
+        start_date = end_date - timedelta(days=days)
+        data = yf.download(ticker, start=start_date, end=end_date)
         data = data.reset_index()
         return data
     except Exception as e:
@@ -46,12 +48,12 @@ def get_enhanced_data(ticker, days=730):
         return pd.DataFrame()
 
 def train_model(X, y, model_type):
-    """Train selected model with hyperparameter optimization"""
+    """Train selected model with hyperparameter optimization."""
     if model_type == "Quantum Ensemble":
         model = GradientBoostingRegressor(n_estimators=200, learning_rate=0.05, max_depth=5)
     elif model_type == "Random Forest":
         param_dist = {'n_estimators': randint(50, 200),
-                     'max_depth': randint(2, 10)}
+                      'max_depth': randint(2, 10)}
         model = RandomizedSearchCV(RandomForestRegressor(), param_dist, n_iter=10)
     elif model_type == "Gradient Boosting":
         model = GradientBoostingRegressor(n_estimators=150, learning_rate=0.1)
@@ -62,27 +64,29 @@ def train_model(X, y, model_type):
     return model
 
 def optimize_portfolio(predictions):
-    """Calculate optimal portfolio allocations with error handling"""
+    """Calculate optimal portfolio allocations with error handling."""
     try:
         returns_list = []
         for p in predictions:
-            returns_list.append({
-                'ticker': p.get('ticker', 'N/A'),
-                'expected_return': p.get('expected_return', 0),
-                'volatility': p.get('volatility', 0)
-            })
+            # Only include predictions with valid ticker and non-None volatility
+            if p.get('ticker') and (p.get('volatility') is not None):
+                returns_list.append({
+                    'ticker': p['ticker'],
+                    'expected_return': p.get('expected_return', 0),
+                    'volatility': p.get('volatility', 0)
+                })
             
         returns = pd.DataFrame(returns_list)
         
         if returns.empty or 'ticker' not in returns.columns:
-            st.error("No valid predictions for portfolio optimization")
+            st.warning("No valid predictions available for portfolio optimization.")
             return []
 
         optimizer = PortfolioOptimizer(
             expected_returns=returns.set_index('ticker')['expected_return'],
             cov_matrix=pd.DataFrame(np.diag(returns['volatility']), 
-                                  index=returns['ticker'], 
-                                  columns=returns['ticker'])
+                                    index=returns['ticker'], 
+                                    columns=returns['ticker'])
         )
         return optimizer.optimize(risk_tolerance)
         
@@ -98,13 +102,19 @@ def run_quantum_predictions(pred_date):
     for idx, ticker in enumerate(TICKERS):
         try:
             data = get_enhanced_data(ticker)
-            if data.empty:
+            # Ensure sufficient data exists (we need enough for the 200-day moving average)
+            if data.empty or len(data) < 200:
+                logging.error(f"Insufficient data for {ticker}")
                 continue
                 
             # Feature Engineering
             data['MA_50'] = data['Close'].rolling(50).mean()
             data['MA_200'] = data['Close'].rolling(200).mean()
             data = data.dropna()
+            
+            if data.empty:
+                logging.error(f"Not enough data after computing moving averages for {ticker}")
+                continue
             
             # Prepare data
             X = data[['MA_50', 'MA_200']]
@@ -113,7 +123,7 @@ def run_quantum_predictions(pred_date):
             # Train model
             model = train_model(X, y, model_choice)
             
-            # Generate predictions
+            # Generate prediction using the latest moving averages
             last_ma50 = data['MA_50'].iloc[-1]
             last_ma200 = data['MA_200'].iloc[-1]
             predicted_price = model.predict([[last_ma50, last_ma200]])[0]
@@ -159,7 +169,7 @@ if refresh_data or st.sidebar.button("Run Analysis"):
                         st.subheader(res['ticker'])
                         st.metric("Current", f"₹{res['current_price']:,.2f}")
                         st.metric("Predicted", f"₹{res['predicted_price']:,.2f}", 
-                                 delta=f"{((res['predicted_price']/res['current_price'])-1):.2%}")
+                                  delta=f"{((res['predicted_price']/res['current_price'])-1):.2%}")
                         st.write(f"**Volatility:** {res['volatility']:.2f}")
                         st.write(f"**Sharpe Ratio:** {res['sharpe_ratio']:.2f}")
         
