@@ -1,0 +1,27 @@
+ERROR:yfinance:
+1 Failed download:
+ERROR:yfinance:['RELIANCE.NS']: YFInvalidPeriodError("%ticker%: Period '730d' is invalid, must be one of ['1d', '5d', '1mo', '3mo', '6mo', '1y', '2y', '5y', '10y', 'ytd', 'max']")
+ERROR:yfinance:
+1 Failed download:
+ERROR:yfinance:['TCS.NS']: YFInvalidPeriodError("%ticker%: Period '730d' is invalid, must be one of ['1d', '5d', '1mo', '3mo', '6mo', '1y', '2y', '5y', '10y', 'ytd', 'max']")
+ERROR:yfinance:
+1 Failed download:
+ERROR:yfinance:['HDFCBANK.NS']: YFInvalidPeriodError("%ticker%: Period '730d' is invalid, must be one of ['1d', '5d', '1mo', '3mo', '6mo', '1y', '2y', '5y', '10y', 'ytd', 'max']")
+ERROR:yfinance:
+1 Failed download:
+ERROR:yfinance:['SBIN.NS']: YFInvalidPeriodError("%ticker%: Period '730d' is invalid, must be one of ['1d', '5d', '1mo', '3mo', '6mo', '1y', '2y', '5y', '10y', 'ytd', 'max']")
+ERROR:yfinance:
+1 Failed download:
+ERROR:yfinance:['ICICIBANK.NS']: YFInvalidPeriodError("%ticker%: Period '730d' is invalid, must be one of ['1d', '5d', '1mo', '3mo', '6mo', '1y', '2y', '5y', '10y', 'ytd', 'max']")
+ERROR:yfinance:
+1 Failed download:
+ERROR:yfinance:['INFY.NS']: YFInvalidPeriodError("%ticker%: Period '730d' is invalid, must be one of ['1d', '5d', '1mo', '3mo', '6mo', '1y', '2y', '5y', '10y', 'ytd', 'max']")
+ERROR:yfinance:
+1 Failed download:
+ERROR:yfinance:['LT.NS']: YFInvalidPeriodError("%ticker%: Period '730d' is invalid, must be one of ['1d', '5d', '1mo', '3mo', '6mo', '1y', '2y', '5y', '10y', 'ytd', 'max']")
+ERROR:yfinance:
+1 Failed download:
+ERROR:yfinance:['AXISBANK.NS']: YFInvalidPeriodError("%ticker%: Period '730d' is invalid, must be one of ['1d', '5d', '1mo', '3mo', '6mo', '1y', '2y', '5y', '10y', 'ytd', 'max']")
+ERROR:yfinance:
+1 Failed download:
+ERROR:yfinance:['BAJFINANCE.NS']: YFInvalidPeriodError("%ticker%: Period '730d' is invalid, must be one of ['1d', '5d', '1mo', '3mo', '6mo', '1y', '2y', '5y', '10y', 'ytd', 'max']")

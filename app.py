@@ -15,23 +15,12 @@ from portfolio_optimizer import PortfolioOptimizer
 # Configure logging
 logging.basicConfig(filename='app.log', level=logging.ERROR)
 
-# # --- UI Configuration ---
-# plt.style.use('seaborn-darkgrid')
-# sns.set_palette("husl")
-# st.set_page_config(
-#     page_title="Quantum Wealth Manager",
-#     layout="wide",
-#     initial_sidebar_state="expanded",
-#     page_icon="💰"
-# )
-
 # --- Configuration ---
 TICKERS = [
     "RELIANCE.NS", "TCS.NS", "HDFCBANK.NS", 
     "SBIN.NS", "ICICIBANK.NS", "INFY.NS", 
     "LT.NS", "AXISBANK.NS", "BAJFINANCE.NS"
 ]
-BENCHMARKS = ["^NSEI", "^NSEMDCP50", "GOLDBEES.NS"]
 
 # --- Sidebar Controls ---
 with st.sidebar:
@@ -43,7 +32,6 @@ with st.sidebar:
     st.markdown("---")
     st.header("Portfolio Preferences")
     investment_amount = st.number_input("Investment Amount (₹)", min_value=1e6, value=5e6, step=1e5)
-    sectors = st.multiselect("Preferred Sectors", ["Banking", "Technology", "Energy", "Consumer", "Infrastructure"])
 
 # --- Data Fetching ---
 @st.cache_data(show_spinner=False, ttl=3600)
@@ -56,12 +44,6 @@ def get_enhanced_data(ticker, days=730):
     except Exception as e:
         logging.error(f"Data fetch error for {ticker}: {e}")
         return pd.DataFrame()
-
-# --- Main Interface ---
-st.title("AI Wealth Management Platform")
-st.markdown("### Intelligent Portfolio Optimization")
-
-# Add these functions after the get_enhanced_data function
 
 def train_model(X, y, model_type):
     """Train selected model with hyperparameter optimization"""
@@ -80,20 +62,34 @@ def train_model(X, y, model_type):
     return model
 
 def optimize_portfolio(predictions):
-    """Calculate optimal portfolio allocations"""
-    returns = pd.DataFrame([{
-        'ticker': p['ticker'],
-        'expected_return': p['expected_return'],
-        'volatility': p['volatility']
-    } for p in predictions])
-    
-    optimizer = PortfolioOptimizer(
-        expected_returns=returns.set_index('ticker')['expected_return'],
-        cov_matrix=pd.DataFrame(np.diag(returns['volatility']), 
-                              index=returns['ticker'], 
-                              columns=returns['ticker'])
-    )
-    return optimizer.optimize(risk_tolerance)
+    """Calculate optimal portfolio allocations with error handling"""
+    try:
+        returns_list = []
+        for p in predictions:
+            returns_list.append({
+                'ticker': p.get('ticker', 'N/A'),
+                'expected_return': p.get('expected_return', 0),
+                'volatility': p.get('volatility', 0)
+            })
+            
+        returns = pd.DataFrame(returns_list)
+        
+        if returns.empty or 'ticker' not in returns.columns:
+            st.error("No valid predictions for portfolio optimization")
+            return []
+
+        optimizer = PortfolioOptimizer(
+            expected_returns=returns.set_index('ticker')['expected_return'],
+            cov_matrix=pd.DataFrame(np.diag(returns['volatility']), 
+                                  index=returns['ticker'], 
+                                  columns=returns['ticker'])
+        )
+        return optimizer.optimize(risk_tolerance)
+        
+    except Exception as e:
+        logging.error(f"Portfolio optimization failed: {e}")
+        st.error("Failed to optimize portfolio. Check data inputs.")
+        return []
 
 def run_quantum_predictions(pred_date):
     results = []
@@ -142,32 +138,39 @@ def run_quantum_predictions(pred_date):
     
     return results
 
+# --- Main Interface ---
+st.title("AI Wealth Management Platform")
+st.markdown("### Intelligent Portfolio Optimization")
+
 if refresh_data or st.sidebar.button("Run Analysis"):
     with st.spinner("Running Financial Models..."):
         predictions = run_quantum_predictions(prediction_date)
         portfolio = optimize_portfolio(predictions)
     
-    # Display Results
-    col1, col2 = st.columns([2, 1])
-    
-    with col1:
-        st.header("Stock Predictions")
-        cols = st.columns(3)
-        for idx, res in enumerate(predictions):
-            with cols[idx % 3]:
-                with st.container():
-                    st.subheader(res['ticker'])
-                    st.metric("Current", f"₹{res['current_price']:,.2f}")
-                    st.metric("Predicted", f"₹{res['predicted_price']:,.2f}", 
-                             delta=f"{((res['predicted_price']/res['current_price'])-1):.2%}")
-                    st.write(f"**Volatility:** {res['volatility']:.2f}")
-                    st.write(f"**Sharpe Ratio:** {res['sharpe_ratio']:.2f}")
-    
-    with col2:
-        st.header("Portfolio Allocation")
-        st.write(f"**Investment:** ₹{investment_amount:,.2f}")
-        for alloc in portfolio:
-            st.progress(alloc['percentage'])
-            st.write(f"{alloc['ticker']}: {alloc['percentage']:.1f}% (₹{investment_amount * alloc['percentage']/100:,.2f})")
+    if predictions:
+        col1, col2 = st.columns([2, 1])
+        
+        with col1:
+            st.header("Stock Predictions")
+            cols = st.columns(3)
+            for idx, res in enumerate(predictions):
+                with cols[idx % 3]:
+                    with st.container():
+                        st.subheader(res['ticker'])
+                        st.metric("Current", f"₹{res['current_price']:,.2f}")
+                        st.metric("Predicted", f"₹{res['predicted_price']:,.2f}", 
+                                 delta=f"{((res['predicted_price']/res['current_price'])-1):.2%}")
+                        st.write(f"**Volatility:** {res['volatility']:.2f}")
+                        st.write(f"**Sharpe Ratio:** {res['sharpe_ratio']:.2f}")
+        
+        with col2:
+            st.header("Portfolio Allocation")
+            st.write(f"**Investment:** ₹{investment_amount:,.2f}")
+            if portfolio:
+                for alloc in portfolio:
+                    st.progress(alloc['percentage'])
+                    st.write(f"{alloc['ticker']}: {alloc['percentage']:.1f}% (₹{investment_amount * alloc['percentage']/100:,.2f})")
+            else:
+                st.warning("No portfolio allocation generated")
 
 st.caption("Disclaimer: This is for educational purposes only. Invest at your own risk.")
