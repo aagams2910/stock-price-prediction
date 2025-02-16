@@ -179,9 +179,10 @@ if refresh_data or st.sidebar.button("Run Analysis"):
             st.write(f"**Investment:** ₹{investment_amount:,.2f}")
             if portfolio:
                 for alloc in portfolio:
-                    st.progress(alloc['percentage'])
-                    st.write(f"{alloc['ticker']}: {alloc['percentage']:.1f}% (₹{investment_amount * alloc['percentage']/100:,.2f})")
-            else:
-                st.warning("No portfolio allocation generated")
+            # Divide by 100 to convert percentage to a fraction between 0.0 and 1.0
+                    st.progress(alloc['percentage'] / 100)
+                    st.write(f"{alloc['ticker']}: {alloc['percentage']:.1f}% (₹{investment_amount * alloc['percentage']/100:,.2f})")            
+                else:
+                    st.warning("No portfolio allocation generated")
 
 st.caption("Disclaimer: This is for educational purposes only. Invest at your own risk.")
