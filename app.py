@@ -72,8 +72,8 @@ def optimize_portfolio(predictions):
             if p.get('ticker') and (p.get('volatility') is not None):
                 returns_list.append({
                     'ticker': p['ticker'],
-                    'expected_return': p.get('expected_return', 0),
-                    'volatility': p.get('volatility', 0)
+                    'expected_return': float(p.get('expected_return', 0)),
+                    'volatility': float(p.get('volatility', 0))
                 })
             
         returns = pd.DataFrame(returns_list)
@@ -129,14 +129,15 @@ def run_quantum_predictions(pred_date):
             predicted_price = model.predict([[last_ma50, last_ma200]])[0]
             
             # Risk Analysis
-            volatility = data['Close'].pct_change().std() * np.sqrt(252)
-            sharpe_ratio = (data['Close'].pct_change().mean() / volatility) * np.sqrt(252)
+            current_price = float(data['Close'].iloc[-1])
+            volatility = float(data['Close'].pct_change().std() * np.sqrt(252))
+            sharpe_ratio = float((data['Close'].pct_change().mean() / volatility) * np.sqrt(252))
             
             results.append({
                 "ticker": ticker,
-                "current_price": data['Close'].iloc[-1],
-                "predicted_price": predicted_price,
-                "expected_return": (predicted_price / data['Close'].iloc[-1] - 1),
+                "current_price": current_price,
+                "predicted_price": float(predicted_price),
+                "expected_return": float(predicted_price / current_price - 1),
                 "volatility": volatility,
                 "sharpe_ratio": sharpe_ratio
             })
@@ -167,9 +168,9 @@ if refresh_data or st.sidebar.button("Run Analysis"):
                 with cols[idx % 3]:
                     with st.container():
                         st.subheader(res['ticker'])
-                        st.metric("Current", f"₹{res['current_price']:,.2f}")
-                        st.metric("Predicted", f"₹{res['predicted_price']:,.2f}", 
-                                  delta=f"{((res['predicted_price']/res['current_price'])-1):.2%}")
+                        st.metric("Current", f"₹{float(res['current_price']):,.2f}")
+                        st.metric("Predicted", f"₹{float(res['predicted_price']):,.2f}", 
+                                  delta=f"{(res['predicted_price']/res['current_price']-1):.2%}")
                         st.write(f"**Volatility:** {res['volatility']:.2f}")
                         st.write(f"**Sharpe Ratio:** {res['sharpe_ratio']:.2f}")
         
