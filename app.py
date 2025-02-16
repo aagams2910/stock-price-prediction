@@ -103,10 +103,10 @@ if st.sidebar.button("Run Prediction"):
             "figure": fig,
         })
 
-    # Display the results in a grid layout (3 columns per row)
+    # Display the results 
     if results:
         st.header("Prediction Results")
-        num_cols = 3  # 3 columns per row, forming a 3x3 grid for 9 stocks
+        num_cols = 3  
         for i in range(0, len(results), num_cols):
             cols = st.columns(num_cols)
             for j, res in enumerate(results[i: i + num_cols]):
