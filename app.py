@@ -159,30 +159,104 @@ if refresh_data or st.sidebar.button("Run Analysis"):
         portfolio = optimize_portfolio(predictions)
     
     if predictions:
-        col1, col2 = st.columns([2, 1])
+        # Create tabs for better organization
+        tab1, tab2 = st.tabs(["Stock Predictions", "Portfolio Allocation"])
         
-        with col1:
-            st.header("Stock Predictions")
+        with tab1:
+            # Display predictions in a more organized manner
+            st.subheader("Market Predictions")
+            
+            # Create a dataframe for all predictions to display in a table
+            pred_df = pd.DataFrame(predictions)
+            pred_df['Return (%)'] = pred_df['expected_return'] * 100
+            pred_df = pred_df.rename(columns={
+                'ticker': 'Ticker',
+                'current_price': 'Current Price (₹)',
+                'predicted_price': 'Predicted Price (₹)',
+                'volatility': 'Volatility',
+                'sharpe_ratio': 'Sharpe Ratio'
+            })
+            st.dataframe(
+                pred_df[['Ticker', 'Current Price (₹)', 'Predicted Price (₹)', 'Return (%)', 'Volatility', 'Sharpe Ratio']]
+                .sort_values('Return (%)', ascending=False)
+                .style.format({
+                    'Current Price (₹)': '₹{:.2f}',
+                    'Predicted Price (₹)': '₹{:.2f}',
+                    'Return (%)': '{:.2f}%',
+                    'Volatility': '{:.2f}',
+                    'Sharpe Ratio': '{:.2f}'
+                }),
+                use_container_width=True
+            )
+            
+            # Display individual stock cards in a more organized grid
+            st.subheader("Stock Details")
+            
+            # Create 3 columns for stock cards
             cols = st.columns(3)
             for idx, res in enumerate(predictions):
                 with cols[idx % 3]:
                     with st.container():
-                        st.subheader(res['ticker'])
-                        st.metric("Current", f"₹{float(res['current_price']):,.2f}")
-                        st.metric("Predicted", f"₹{float(res['predicted_price']):,.2f}", 
-                                  delta=f"{(res['predicted_price']/res['current_price']-1):.2%}")
-                        st.write(f"**Volatility:** {res['volatility']:.2f}")
-                        st.write(f"**Sharpe Ratio:** {res['sharpe_ratio']:.2f}")
+                        st.markdown(f"##### {res['ticker']}")
+                        col1, col2 = st.columns(2)
+                        with col1:
+                            st.metric("Current", f"₹{float(res['current_price']):,.2f}")
+                        with col2:
+                            st.metric("Predicted", f"₹{float(res['predicted_price']):,.2f}", 
+                                    delta=f"{(res['predicted_price']/res['current_price']-1):.2%}")
+                        st.markdown(f"**Volatility:** {res['volatility']:.2f} | **Sharpe:** {res['sharpe_ratio']:.2f}")
+                        st.markdown("---")
         
-        with col2:
-            st.header("Portfolio Allocation")
-            st.write(f"**Investment:** ₹{investment_amount:,.2f}")
+        with tab2:
+            st.subheader("Optimal Portfolio Allocation")
+            
+            # Show investment amount prominently
+            st.markdown(f"### Total Investment: ₹{investment_amount:,.2f}")
+            
             if portfolio:
+                # Create a pie chart for portfolio allocation
+                fig, ax = plt.subplots(figsize=(10, 6))
+                labels = [alloc['ticker'] for alloc in portfolio if alloc['percentage'] > 1]
+                sizes = [alloc['percentage'] for alloc in portfolio if alloc['percentage'] > 1]
+                
+                # Add "Others" category for small allocations
+                small_allocs = [alloc for alloc in portfolio if alloc['percentage'] <= 1]
+                if small_allocs:
+                    labels.append("Others")
+                    sizes.append(sum(alloc['percentage'] for alloc in small_allocs))
+                
+                ax.pie(sizes, labels=labels, autopct='%1.1f%%', startangle=90)
+                ax.axis('equal')
+                st.pyplot(fig)
+                
+                # Display allocation table
+                alloc_data = []
                 for alloc in portfolio:
-            # Divide by 100 to convert percentage to a fraction between 0.0 and 1.0
-                    st.progress(alloc['percentage'] / 100)
-                    st.write(f"{alloc['ticker']}: {alloc['percentage']:.1f}% (₹{investment_amount * alloc['percentage']/100:,.2f})")            
-                else:
-                    st.warning("No portfolio allocation generated")
+                    alloc_data.append({
+                        "Ticker": alloc['ticker'],
+                        "Allocation (%)": f"{alloc['percentage']:.1f}%",
+                        "Amount (₹)": f"₹{investment_amount * alloc['percentage']/100:,.2f}",
+                        "Expected Return": f"{alloc['expected_return']:.2%}",
+                        "Volatility": f"{alloc['volatility']:.2f}"
+                    })
+                
+                st.dataframe(pd.DataFrame(alloc_data), use_container_width=True)
+                
+                # Display risk metrics
+                col1, col2, col3 = st.columns(3)
+                with col1:
+                    portfolio_return = sum(alloc['percentage'] * alloc['expected_return'] for alloc in portfolio) / 100
+                    st.metric("Expected Return", f"{portfolio_return:.2%}")
+                with col2:
+                    # Simple portfolio volatility estimate
+                    portfolio_vol = sum(alloc['percentage'] * alloc['volatility'] for alloc in portfolio) / 100
+                    st.metric("Portfolio Volatility", f"{portfolio_vol:.2f}")
+                with col3:
+                    sharpe = portfolio_return / portfolio_vol if portfolio_vol > 0 else 0
+                    st.metric("Sharpe Ratio", f"{sharpe:.2f}")
+            else:
+                st.warning("No portfolio allocation generated")
 
+# Add footer with disclaimer
+st.markdown("---")
 st.caption("Disclaimer: This is for educational purposes only. Invest at your own risk.")
