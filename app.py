@@ -49,6 +49,9 @@ def get_enhanced_data(ticker, days=730):
 
 def train_model(X, y, model_type):
     """Train selected model with hyperparameter optimization."""
+    # Convert y to 1D array to avoid the DataConversionWarning
+    y = np.ravel(y)
+    
     if model_type == "Quantum Ensemble":
         model = GradientBoostingRegressor(n_estimators=200, learning_rate=0.05, max_depth=5)
     elif model_type == "Random Forest":
@@ -62,7 +65,6 @@ def train_model(X, y, model_type):
     
     model.fit(X, y)
     return model
-
 def optimize_portfolio(predictions):
     """Calculate optimal portfolio allocations with error handling."""
     try:
