@@ -65,6 +65,7 @@ def train_model(X, y, model_type):
     
     model.fit(X, y)
     return model
+
 def optimize_portfolio(predictions):
     """Calculate optimal portfolio allocations with error handling."""
     try:

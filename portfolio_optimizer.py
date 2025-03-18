@@ -6,7 +6,6 @@ import logging
 # Configure logging (if not already configured elsewhere)
 logging.basicConfig(filename='app.log', level=logging.ERROR)
 
-
 class PortfolioOptimizer:
     def __init__(self, expected_returns, cov_matrix, risk_free_rate=0.05):
         """
